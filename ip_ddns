@@ -1,0 +1,42 @@
+#!/bin/sh
+
+#读取配置文件中的客户端
+if  [ "$clien" = "4" ] ; then
+	CLIEN=clash
+elif  [ "$clien" = "3" ] ; then
+		CLIEN=shadowsocksr
+elif  [ "$clien" = "2" ] ; then
+			CLIEN=passwall2
+			else
+			CLIEN=passwall
+fi
+
+#判断是否停止科学上网服务
+if [ "$pause" = "false" ] ; then
+	echo "按要求未停止科学上网服务"
+else
+	/etc/init.d/$CLIEN stop
+	echo "已停止$CLIEN"
+fi
+
+#判断是否配置测速地址 
+if [[ "$CFST_URL" == http* ]] ; then
+	CFST_URL_R="-url $CFST_URL"
+else
+	CFST_URL_R=""
+fi
+#开始优选IP
+./CloudflareST $CFST_URL_R -t $CFST_T -n $CFST_N -dn $CFST_DN -tl $CFST_TL -tll $CFST_TLL -sl $CFST_SL -p $CFST_P 
+anycast=$(sed -n "2,1p" result.csv | awk -F, '{print $1}')
+
+#域名记录更新
+curl -X POST https://dnsapi.cn/Record.Modify -d "login_token="$LOGIN_TOKEN"&format=json&domain_id=$DOMAIN_ID&record_id=$RECORD_ID&sub_domain=$SUB_DOMAIN&value=$anycast&record_type=A&record_line_id="$LINE_ID""
+
+#延迟10s后重启代理
+sleep 10s
+if [ "$pause" = "false" ] ; then
+	echo "按要求未重启科学上网服务"
+else
+	/etc/init.d/$CLIEN restart
+	echo "已重启$CLIEN"
+fi
