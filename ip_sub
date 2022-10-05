@@ -1,0 +1,5 @@
+#!/bin/sh
+
+
+#获取子域名id
+curl -X POST https://dnsapi.cn/Record.List -d "login_token="$LOGIN_TOKEN"&format=json&domain_id=$DOMAIN_ID&sub_domain=$SUB_DOMAIN&record_type=A&offset=0&length=3"
